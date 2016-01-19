@@ -65,7 +65,8 @@ Build-Depends: btrfs-tools,
                xfsprogs,
                xmlstarlet,
                yasm [amd64],
-               zlib1g-dev
+               zlib1g-dev,
+               liblua5.1-dev
 Standards-Version: 3.9.3
 
 Package: ceph
@@ -93,7 +94,8 @@ Depends: binutils,
          sdparm | hdparm,
          xfsprogs,
          ${misc:Depends},
-         ${shlibs:Depends}
+         ${shlibs:Depends},
+         liblua5.1
 Recommends: btrfs-tools,
             ceph-mds (= ${binary:Version}),
             librados2 (= ${binary:Version}),

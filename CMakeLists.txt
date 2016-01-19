@@ -394,6 +394,8 @@ if(WITH_SELINUX)
   add_subdirectory(selinux)
 endif(WITH_SELINUX)
 
+find_package(Lua51 REQUIRED)
+
 # enables testing and creates Make check command
 add_custom_target(tests
   COMMENT "Building tests")

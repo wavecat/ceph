@@ -136,3 +136,12 @@ endif (WITH_CEPHFS)
 
 add_library(cls_numops_client STATIC numops/cls_numops_client.cc)
 
+# cls_lua
+add_library(cls_lua SHARED lua/cls_lua.cc lua/lua_bufferlist.cc)
+target_include_directories(cls_lua PUBLIC ${LUA_INCLUDE_DIR})
+target_link_libraries(cls_lua ${LUA_LIBRARIES} json_spirit)
+set_target_properties(cls_lua PROPERTIES VERSION "1.0.0" SOVERSION "1")
+install(TARGETS cls_lua DESTINATION ${cls_dir})
+
+# cls_lua_client
+add_library(cls_lua_client STATIC lua/cls_lua_client.cc)

@@ -123,6 +123,7 @@ BuildRequires:	xfsprogs
 BuildRequires:	xfsprogs-devel
 BuildRequires:	xmlstarlet
 BuildRequires:	yasm
+BuildRequires:	lua-devel
 
 #################################################################################
 # distro-conditional dependencies
@@ -223,6 +224,7 @@ Requires:      redhat-lsb-core
 %if 0%{with xio}
 Requires:      libxio
 %endif
+Requires:      lua
 %description base
 Base is the package that includes all the files shared amongst ceph servers
 
