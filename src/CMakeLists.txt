@@ -529,6 +529,8 @@ endif(${WITH_LTTNG})
 
 add_subdirectory(global)
 
+add_subdirectory(lua)
+
 # rados object classes
 add_subdirectory(cls)
 
