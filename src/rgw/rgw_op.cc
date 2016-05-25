@@ -6,6 +6,9 @@
 
 #include <sstream>
 
+#include <boost/optional.hpp>
+#include <boost/utility/in_place_factory.hpp>
+
 #include "common/Clock.h"
 #include "common/armor.h"
 #include "common/mime.h"
@@ -3271,12 +3274,7 @@ int RGWDeleteObj::handle_slo_manifest(bufferlist& bl)
     return -EIO;
   }
 
-  try {
-    deleter = std::unique_ptr<RGWBulkDelete::Deleter>(\
-          new RGWBulkDelete::Deleter(store, s));
-  } catch (std::bad_alloc) {
-    return -ENOMEM;
-  }
+  deleter = boost::in_place(RGWBulkDelete::Deleter(store, s));
 
   list<RGWBulkDelete::acct_path_t> items;
   for (const auto& iter : slo_info.entries) {
@@ -5061,7 +5059,7 @@ void RGWBulkDelete::pre_exec()
 
 void RGWBulkDelete::execute()
 {
-  deleter = std::unique_ptr<Deleter>(new RGWBulkDelete::Deleter(store, s));
+  deleter = boost::in_place(RGWBulkDelete::Deleter(store, s));
 
   bool is_truncated = false;
   do {
