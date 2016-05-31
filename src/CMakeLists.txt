@@ -709,6 +709,7 @@ add_subdirectory(test)
 
 add_subdirectory(compressor)
 add_subdirectory(tools)
+add_subdirectory(dmclock) # after gmock
 
 configure_file(${CMAKE_SOURCE_DIR}/src/ceph-coverage.in
   ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/ceph-coverage @ONLY)
