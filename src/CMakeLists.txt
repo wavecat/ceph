@@ -411,6 +411,7 @@ set(libcommon_files
   xxHash/xxhash.c
   common/assert.cc
   common/run_cmd.cc
+  common/mClockOpClassAdapter.cc
   common/WorkQueue.cc
   common/ConfUtils.cc
   common/MemoryModel.cc
