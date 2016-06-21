@@ -414,7 +414,6 @@ set(libcommon_files
   xxHash/xxhash.c
   common/assert.cc
   common/run_cmd.cc
-  common/mClockOpClassAdapter.cc
   common/WorkQueue.cc
   common/ConfUtils.cc
   common/MemoryModel.cc
@@ -687,6 +686,7 @@ set(cls_references_files objclass/class_api.cc)
 add_library(cls_references_objs OBJECT ${cls_references_files})
 
 add_subdirectory(osd)
+
 set(ceph_osd_srcs
   ceph_osd.cc)
 add_executable(ceph-osd ${ceph_osd_srcs}
