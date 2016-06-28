@@ -24,11 +24,25 @@ libosd_a_SOURCES = \
 	osd/OpRequest.cc \
 	osd/SnapMapper.cc \
 	osd/ScrubStore.cc \
+	osd/mClockOpClassAdapter.cc \
+        dmclock/src/dmclock_util.cc \
+        dmclock/support/src/run_every.cc \
 	objclass/class_api.cc
 
-libosd_a_CXXFLAGS = ${AM_CXXFLAGS}
+libosd_a_CXXFLAGS = ${AM_CXXFLAGS} -Idmclock/src -Idmclock/support/src -Igoogletest/googletest/include/gtest
 libosd_a_LIBADD =
 noinst_LIBRARIES += libosd.a
+noinst_HEADERS += \
+	osd/mClockOpClassAdapter.h \
+	osd/PGQueueable.h \
+	common/mClockPriorityQueue.h \
+	dmclock/src/dmclock_server.h \
+	dmclock/src/dmclock_recs.h \
+	dmclock/src/dmclock_util.h \
+	dmclock/src/dmclock_client.h \
+	dmclock/support/src/run_every.h \
+	dmclock/support/src/indirect_intrusive_heap.h \
+	googletest/googletest/include/gtest/gtest_prod.h
 
 noinst_HEADERS += \
 	osd/ClassHandler.h \
@@ -51,7 +65,15 @@ noinst_HEADERS += \
 	osd/ECTransaction.h \
 	osd/Watch.h \
 	osd/ScrubStore.h \
-	osd/osd_types.h
+	osd/osd_types.h \
+        common/mClockPriorityQueue.h \
+	dmclock/src/dmclock_server.h \
+	dmclock/src/dmclock_client.h \
+	dmclock/src/dmclock_util.h \
+	dmclock/support/src/indirect_intrusive_heap.h \
+	dmclock/support/src/run_every.h \
+	dmclock/support/src/profile.h
+
 
 endif # WITH_OSD
 endif # ENABLE_SERVER
