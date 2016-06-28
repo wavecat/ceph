@@ -1066,6 +1066,7 @@ int SyntheticClient::play_trace(Trace& t, string& prefix, bool metadata_only)
     }
 
     // high level ops ---------------------
+    UserPerm perms = client->pick_my_perms();
     if (strcmp(op, "link") == 0) {
       const char *a = t.get_string(buf, p);
       const char *b = t.get_string(buf2, p);
@@ -1129,7 +1130,7 @@ int SyntheticClient::play_trace(Trace& t, string& prefix, bool metadata_only)
     } else if (strcmp(op, "getdir") == 0) {
       const char *a = t.get_string(buf, p);
       list<string> contents;
-      int r = client->getdir(a, contents);
+      int r = client->getdir(a, contents, perms);
       if (r < 0) {
         dout(1) << "getdir on " << a << " returns " << r << dendl;
       }
@@ -1554,7 +1555,8 @@ int SyntheticClient::clean_dir(string& basedir)
 {
   // read dir
   list<string> contents;
-  int r = client->getdir(basedir.c_str(), contents);
+  UserPerm perms = client->pick_my_perms();
+  int r = client->getdir(basedir.c_str(), contents, perms);
   if (r < 0) {
     dout(1) << "getdir on " << basedir << " returns " << r << dendl;
     return r;
@@ -1603,6 +1605,7 @@ int SyntheticClient::full_walk(string& basedir)
   ceph::unordered_map<inodeno_t, int> nlink;
   ceph::unordered_map<inodeno_t, int> nlink_seen;
 
+  UserPerm perms = client->pick_my_perms();
   while (!dirq.empty()) {
     string dir = dirq.front();
     frag_info_t expect = statq.front();
@@ -1613,7 +1616,7 @@ int SyntheticClient::full_walk(string& basedir)
 
     // read dir
     list<string> contents;
-    int r = client->getdir(dir.c_str(), contents);
+    int r = client->getdir(dir.c_str(), contents, perms);
     if (r < 0) {
       dout(1) << "getdir on " << dir << " returns " << r << dendl;
       continue;
@@ -1802,8 +1805,9 @@ int SyntheticClient::read_dirs(const char *basedir, int dirs, int files, int dep
   dout(3) << "read_dirs " << basedir << " dirs " << dirs << " files " << files << " depth " << depth << dendl;
 
   list<string> contents;
+  UserPerm perms = client->pick_my_perms();
   utime_t s = ceph_clock_now(client->cct);
-  int r = client->getdir(basedir, contents);
+  int r = client->getdir(basedir, contents, perms);
   utime_t e = ceph_clock_now(client->cct);
   e -= s;
   if (r < 0) {
@@ -2636,6 +2640,7 @@ int SyntheticClient::random_walk(int num_req)
 
   init_op_dist();  // set up metadata op distribution
  
+  UserPerm perms = client->pick_my_perms();
   while (left > 0) {
     left--;
 
@@ -2775,7 +2780,7 @@ int SyntheticClient::random_walk(int num_req)
       clear_dir();
       
       list<string> c;
-      r = client->getdir( cwd.c_str(), c );
+      r = client->getdir(cwd.c_str(), c, perms);
       
       for (list<string>::iterator it = c.begin();
            it != c.end();
