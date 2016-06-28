@@ -21,7 +21,8 @@ set(osd_srcs
   ScrubStore.cc
   osd_types.cc
   ECUtil.cc
-  mClockOpClassAdapter.cc
+  mClockOpClassQueue.cc
+  mClockClientQueue.cc
   ${CMAKE_SOURCE_DIR}/src/common/TrackedOp.cc
   ${osdc_osd_srcs})
 if(HAS_VTA)
