@@ -1070,7 +1070,7 @@ int SyntheticClient::play_trace(Trace& t, string& prefix, bool metadata_only)
     if (strcmp(op, "link") == 0) {
       const char *a = t.get_string(buf, p);
       const char *b = t.get_string(buf2, p);
-      client->link(a,b);      
+      client->link(a, b, perms);
     } else if (strcmp(op, "unlink") == 0) {
       const char *a = t.get_string(buf, p);
       client->unlink(a);
@@ -1342,7 +1342,7 @@ int SyntheticClient::play_trace(Trace& t, string& prefix, bool metadata_only)
 	  ll_inos.count(ni)) {
 	i1 = client->ll_get_inode(vinodeno_t(ll_inos[i],CEPH_NOSNAP));
 	i2 = client->ll_get_inode(vinodeno_t(ll_inos[ni],CEPH_NOSNAP));
-	client->ll_link(i1, i2, nn, &attr);
+	client->ll_link(i1, i2, nn, &attr, perms);
 	client->ll_put(i1);
 	client->ll_put(i2);
       }
@@ -1889,6 +1889,8 @@ int SyntheticClient::link_test()
   char d[255];
   char e[255];
 
+  UserPerm perms = client->pick_my_perms();
+
  // create files
   int num = 200;
 
@@ -1910,7 +1912,7 @@ int SyntheticClient::link_test()
   for (int i=0; i<num; i++) {
     snprintf(d, sizeof(d), "orig/file.%d", i);
     snprintf(e, sizeof(e), "copy/file.%d", i);
-    client->link(d, e);
+    client->link(d, e, perms);
   }
   end = ceph_clock_now(client->cct);
   end -= start;
@@ -2865,6 +2867,8 @@ void SyntheticClient::make_dir_mess(const char *basedir, int n)
 
 void SyntheticClient::foo()
 {
+  UserPerm perms = client->pick_my_perms();
+
   if (1) {
     // make 2 parallel dirs, link/unlink between them.
     char a[100], b[100];
@@ -2878,7 +2882,7 @@ void SyntheticClient::foo()
       for (int i=0; i<10; i++) {
 	snprintf(a, sizeof(a), "/a/%d", i);
 	snprintf(b, sizeof(b), "/b/%d", i);
-	client->link(a, b);
+	client->link(a, b, perms);
       }
       for (int i=0; i<10; i++) {
 	snprintf(b, sizeof(b), "/b/%d", i);
@@ -2972,7 +2976,7 @@ void SyntheticClient::foo()
       char dst[80];
       snprintf(src, sizeof(src), "syn.0.0/dir.%d/dir.%d/file.%d", a, b, c);
       snprintf(dst, sizeof(dst), "syn.0.0/dir.%d/dir.%d/newlink.%d", d, e, f);
-      client->link(src, dst);
+      client->link(src, dst, perms);
     }
     srand(0);
     for (int i=0; i<100; i++) {
@@ -2997,16 +3001,16 @@ void SyntheticClient::foo()
   // link fun
   client->mknod("one", 0755);
   client->mknod("two", 0755);
-  client->link("one", "three");
+  client->link("one", "three", perms);
   client->mkdir("dir", 0755);
-  client->link("two", "/dir/twolink");
-  client->link("dir/twolink", "four");
+  client->link("two", "/dir/twolink", perms);
+  client->link("dir/twolink", "four", perms);
   
   // unlink fun
   client->mknod("a", 0644);
   client->unlink("a");
   client->mknod("b", 0644);
-  client->link("b", "c");
+  client->link("b", "c", perms);
   client->unlink("c");
   client->mkdir("d", 0755);
   client->unlink("d");
@@ -3027,16 +3031,16 @@ void SyntheticClient::foo()
   client->rename("dir2/p2","/p2");
   
   // check primary+remote link merging
-  client->link("p2","p2.l");
-  client->link("p4","p4.l");
+  client->link("p2","p2.l", perms);
+  client->link("p4","p4.l", perms);
   client->rename("p2.l","p2");
   client->rename("p4","p4.l");
 
   // check anchor updates
   client->mknod("dir1/a", 0644);
-  client->link("dir1/a", "da1");
-  client->link("dir1/a", "da2");
-  client->link("da2","da3");
+  client->link("dir1/a", "da1", perms);
+  client->link("dir1/a", "da2", perms);
+  client->link("da2","da3", perms);
   client->rename("dir1/a","dir2/a");
   client->rename("dir2/a","da2");
   client->rename("da1","da2");
@@ -3059,6 +3063,8 @@ int SyntheticClient::thrash_links(const char *basedir, int dirs, int files, int 
 	  << dendl;
 
   if (time_to_stop()) return 0;
+
+  UserPerm perms = client->pick_my_perms();
 
   srand(0);
   if (1) {
@@ -3129,7 +3135,7 @@ int SyntheticClient::thrash_links(const char *basedir, int dirs, int files, int 
       case 1: 
 	client->mknod(src.c_str(), 0755); 
 	client->unlink(dst.c_str());
-	client->link(src.c_str(), dst.c_str()); 
+	client->link(src.c_str(), dst.c_str(), perms); 
 	break;
       case 2: client->unlink(src.c_str()); break;
       case 3: client->unlink(dst.c_str()); break;
@@ -3172,7 +3178,7 @@ int SyntheticClient::thrash_links(const char *basedir, int dirs, int files, int 
       snprintf(f, sizeof(f), "/ln.%d", i);
       ln += f;
       
-      client->link(file.c_str(), ln.c_str());  
+      client->link(file.c_str(), ln.c_str(), perms);
     }
   }
   return 0;
