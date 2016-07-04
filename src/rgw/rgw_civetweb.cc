@@ -61,7 +61,8 @@ int RGWMongoose::complete_request()
        * 'given in the response.'
        *
        */
-      if (status_num == 204 || status_num == 304) {
+      if ((status_num == 204 || status_num == 304) &&
+          ! g_conf->rgw_always_print_content_length) {
         has_content_length = true;
       } else if (0 && data.length() == 0) {
         has_content_length = true;
