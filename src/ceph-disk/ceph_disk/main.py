@@ -1498,7 +1498,27 @@ class Device(object):
         if num == 0:
             num = get_free_partition_index(dev=self.path)
         if size > 0:
-            new = '--new={num}:0:+{size}M'.format(num=num, size=size)
+            # Obtain the sector number with the current alignment 
+            # correction applied as the actual partition start point.
+            # This could create the partition whose size is exactly 
+            # equal to 'size' passed in.
+            beg, err, ret = command(
+                [
+                    'sgdisk',
+                    '-F',
+                    self.path
+                ],
+            )
+            LOG.debug("stderr " + err)
+            if ret != 0:
+                LOG.warning('Fail to obtain the sector number with the current '
+                            'alignment correction and try from the first '
+                            'available partition number instead')
+                beg = "0"
+
+            new = '--new={num}:{beg}:+{size}M'.format(num=num,
+                                                      beg=beg.rstrip(),
+                                                      size=size)
             if size > self.get_dev_size():
                 LOG.error('refusing to create %s on %s' % (name, self.path))
                 LOG.error('%s size (%sM) is bigger than device (%sM)'
