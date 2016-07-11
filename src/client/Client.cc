@@ -6122,7 +6122,7 @@ int Client::link(const char *relexisting, const char *relpath, const UserPerm& p
   return r;
 }
 
-int Client::unlink(const char *relpath)
+int Client::unlink(const char *relpath, const UserPerm& perm)
 {
   Mutex::Locker lock(client_lock);
   tout(cct) << "unlink" << std::endl;
@@ -6132,15 +6132,15 @@ int Client::unlink(const char *relpath)
   string name = path.last_dentry();
   path.pop_dentry();
   InodeRef dir;
-  int r = path_walk(path, &dir);
+  int r = path_walk(path, &dir, perm);
   if (r < 0)
     return r;
   if (cct->_conf->client_permissions) {
-    r = may_delete(dir.get(), name.c_str());
+    r = may_delete(dir.get(), name.c_str(), perm);
     if (r < 0)
       return r;
   }
-  return _unlink(dir.get(), name.c_str());
+  return _unlink(dir.get(), name.c_str(), perm);
 }
 
 int Client::rename(const char *relfrom, const char *relto)
@@ -10798,9 +10798,11 @@ int Client::ll_symlink(Inode *parent, const char *name, const char *value,
   return r;
 }
 
-int Client::_unlink(Inode *dir, const char *name, int uid, int gid)
+int Client::_unlink(Inode *dir, const char *name, const UserPerm& perm)
 {
-  ldout(cct, 3) << "_unlink(" << dir->ino << " " << name << " uid " << uid << " gid " << gid << ")" << dendl;
+  ldout(cct, 3) << "_unlink(" << dir->ino << " " << name
+		<< " uid " << perm.uid() << " gid " << perm.gid()
+		<< ")" << dendl;
 
   if (dir->snapid != CEPH_NOSNAP) {
     return -EROFS;
@@ -10823,7 +10825,7 @@ int Client::_unlink(Inode *dir, const char *name, int uid, int gid)
   req->dentry_drop = CEPH_CAP_FILE_SHARED;
   req->dentry_unless = CEPH_CAP_FILE_EXCL;
 
-  res = _lookup(dir, name, &otherin, uid, gid);
+  res = _lookup(dir, name, &otherin, perm);
   if (res < 0)
     goto fail;
   req->set_other_inode(otherin.get());
@@ -10831,7 +10833,7 @@ int Client::_unlink(Inode *dir, const char *name, int uid, int gid)
 
   req->set_inode(dir);
 
-  res = make_request(req, uid, gid);
+  res = make_request(req, perm);
 
   trim_cache();
   ldout(cct, 3) << "unlink(" << path << ") = " << res << dendl;
@@ -10842,7 +10844,7 @@ int Client::_unlink(Inode *dir, const char *name, int uid, int gid)
   return res;
 }
 
-int Client::ll_unlink(Inode *in, const char *name, int uid, int gid)
+int Client::ll_unlink(Inode *in, const char *name, const UserPerm& perm)
 {
   Mutex::Locker lock(client_lock);
 
@@ -10854,11 +10856,11 @@ int Client::ll_unlink(Inode *in, const char *name, int uid, int gid)
   tout(cct) << name << std::endl;
 
   if (!cct->_conf->fuse_default_permissions) {
-    int r = may_delete(in, name, uid, gid);
+    int r = may_delete(in, name, perm);
     if (r < 0)
       return r;
   }
-  return _unlink(in, name, uid, gid);
+  return _unlink(in, name, perm);
 }
 
 int Client::_rmdir(Inode *dir, const char *name, int uid, int gid)
