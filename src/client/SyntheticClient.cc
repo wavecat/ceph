@@ -326,6 +326,8 @@ int SyntheticClient::run()
 
   int seq = 0;
 
+  UserPerm perms = client->pick_my_perms();
+
   for (list<int>::iterator it = modes.begin();
        it != modes.end();
        ++it) {
@@ -894,7 +896,7 @@ int SyntheticClient::run()
 	string base = get_sarg(0);
 	string name = get_sarg(0);
 	if (run_me())
-	  mksnap(base.c_str(), name.c_str());
+	  mksnap(base.c_str(), name.c_str(), perms);
 	did_run_me();
       }
       break;
@@ -995,6 +997,7 @@ void SyntheticClient::up()
 int SyntheticClient::play_trace(Trace& t, string& prefix, bool metadata_only)
 {
   dout(4) << "play trace prefix '" << prefix << "'" << dendl;
+  UserPerm perms = client->pick_my_perms();
   t.start();
 
   char buf[1024];
@@ -1016,7 +1019,7 @@ int SyntheticClient::play_trace(Trace& t, string& prefix, bool metadata_only)
   // prefix?
   const char *p = prefix.c_str();
   if (prefix.length()) {
-    client->mkdir(prefix.c_str(), 0755);
+    client->mkdir(prefix.c_str(), 0755, perms);
     struct stat attr;
     i1 = client->ll_get_inode(vinodeno_t(1, CEPH_NOSNAP));
     if (client->ll_lookup(i1, prefix.c_str(), &attr, &i2) == 0) {
@@ -1081,7 +1084,7 @@ int SyntheticClient::play_trace(Trace& t, string& prefix, bool metadata_only)
     } else if (strcmp(op, "mkdir") == 0) {
       const char *a = t.get_string(buf, p);
       int64_t b = t.get_int();
-      client->mkdir(a, b);
+      client->mkdir(a, b, perms);
     } else if (strcmp(op, "rmdir") == 0) {
       const char *a = t.get_string(buf, p);
       client->rmdir(a);
@@ -1288,7 +1291,7 @@ int SyntheticClient::play_trace(Trace& t, string& prefix, bool metadata_only)
       struct stat attr;
       if (ll_inos.count(i)) {
 	i1 = client->ll_get_inode(vinodeno_t(ll_inos[i],CEPH_NOSNAP));
-	if (client->ll_mkdir(i1, n, m, &attr, &i2) == 0)
+	if (client->ll_mkdir(i1, n, m, &attr, &i2, perms) == 0)
 	  ll_inos[ri] = attr.st_ino;
 	client->ll_put(i1);
       }
@@ -1740,8 +1743,9 @@ int SyntheticClient::make_dirs(const char *basedir, int dirs, int files, int dep
 {
   if (time_to_stop()) return 0;
 
+  UserPerm perms = client->pick_my_perms();
   // make sure base dir exists
-  int r = client->mkdir(basedir, 0755);
+  int r = client->mkdir(basedir, 0755, perms);
   if (r != 0) {
     dout(1) << "can't make base dir? " << basedir << dendl;
     //return -1;
@@ -1845,14 +1849,14 @@ int SyntheticClient::make_files(int num, int count, int priv, bool more)
   if (priv) {
     for (int c=0; c<count; c++) {
       snprintf(d, sizeof(d), "dir.%d.run%d", whoami, c);
-      client->mkdir(d, 0755);
+      client->mkdir(d, 0755, perms);
     }
   } else {
     // shared
     if (true || whoami == 0) {
       for (int c=0; c<count; c++) {
         snprintf(d, sizeof(d), "dir.%d.run%d", 0, c);
-        client->mkdir(d, 0755);
+        client->mkdir(d, 0755, perms);
       }
     } else {
       sleep(2);
@@ -1895,8 +1899,8 @@ int SyntheticClient::link_test()
  // create files
   int num = 200;
 
-  client->mkdir("orig", 0755);
-  client->mkdir("copy", 0755);
+  client->mkdir("orig", 0755, perms);
+  client->mkdir("copy", 0755, perms);
 
   utime_t start = ceph_clock_now(client->cct);
   for (int i=0; i<num; i++) {
@@ -1926,8 +1930,9 @@ int SyntheticClient::link_test()
 int SyntheticClient::create_shared(int num)
 {
   // files
+  UserPerm perms = client->pick_my_perms();
   char d[255];
-  client->mkdir("test", 0755);
+  client->mkdir("test", 0755, perms);
   for (int n=0; n<num; n++) {
     snprintf(d, sizeof(d), "test/file.%d", n);
     client->mknod(d, 0644);
@@ -2700,7 +2705,7 @@ int SyntheticClient::random_walk(int num_req)
     }
     
     if (op == CEPH_MDS_OP_MKDIR) {
-      r = client->mkdir( make_sub("mkdir"), 0755);
+      r = client->mkdir(make_sub("mkdir"), 0755, perms);
     }
     
     if (op == CEPH_MDS_OP_RMDIR) {
@@ -2832,12 +2837,13 @@ int SyntheticClient::random_walk(int num_req)
 
 void SyntheticClient::make_dir_mess(const char *basedir, int n)
 {
+  UserPerm perms = client->pick_my_perms();
   vector<string> dirs;
   
   dirs.push_back(basedir);
   dirs.push_back(basedir);
   
-  client->mkdir(basedir, 0755);
+  client->mkdir(basedir, 0755, perms);
 
   // motivation:
   //  P(dir) ~ subdirs_of(dir) + 2
@@ -2860,7 +2866,7 @@ void SyntheticClient::make_dir_mess(const char *basedir, int n)
     dirs.push_back(dir);
 
     // do it
-    client->mkdir(dir.c_str(), 0755);
+    client->mkdir(dir.c_str(), 0755, perms);
   }
     
   
@@ -2875,8 +2881,8 @@ void SyntheticClient::foo()
   if (1) {
     // make 2 parallel dirs, link/unlink between them.
     char a[100], b[100];
-    client->mkdir("/a", 0755);
-    client->mkdir("/b", 0755);
+    client->mkdir("/a", 0755, perms);
+    client->mkdir("/b", 0755, perms);
     for (int i=0; i<10; i++) {
       snprintf(a, sizeof(a), "/a/%d", i);
       client->mknod(a, 0644);
@@ -3005,7 +3011,7 @@ void SyntheticClient::foo()
   client->mknod("one", 0755);
   client->mknod("two", 0755);
   client->link("one", "three", perms);
-  client->mkdir("dir", 0755);
+  client->mkdir("dir", 0755, perms);
   client->link("two", "/dir/twolink", perms);
   client->link("dir/twolink", "four", perms);
   
@@ -3015,7 +3021,7 @@ void SyntheticClient::foo()
   client->mknod("b", 0644);
   client->link("b", "c", perms);
   client->unlink("c", perms);
-  client->mkdir("d", 0755);
+  client->mkdir("d", 0755, perms);
   client->unlink("d", perms);
   client->rmdir("d");
 
@@ -3027,8 +3033,8 @@ void SyntheticClient::foo()
   client->rename("p3","p4", perms);
 
   // check dest dir ambiguity thing
-  client->mkdir("dir1", 0755);
-  client->mkdir("dir2", 0755);
+  client->mkdir("dir1", 0755, perms);
+  client->mkdir("dir2", 0755, perms);
   client->rename("p2", "dir1/p2", perms);
   client->rename("dir1/p2", "dir2/p2", perms);
   client->rename("dir2/p2", "/p2", perms);
@@ -3050,10 +3056,10 @@ void SyntheticClient::foo()
   client->rename("da2", "da3", perms);
 
   // check directory renames
-  client->mkdir("dir3", 0755);
+  client->mkdir("dir3", 0755, perms);
   client->mknod("dir3/asdf", 0644);
-  client->mkdir("dir4", 0755);
-  client->mkdir("dir5", 0755);
+  client->mkdir("dir4", 0755, perms);
+  client->mkdir("dir5", 0755, perms);
   client->mknod("dir5/asdf", 0644);
   client->rename("dir3", "dir4", perms); // ok
   client->rename("dir4", "dir5", perms); // fail
@@ -3203,7 +3209,7 @@ void SyntheticClient::import_find(const char *base, const char *find, bool data)
    */
 
   if (base[0] != '-') 
-    client->mkdir(base, 0755);
+    client->mkdir(base, 0755, client->pick_my_perms());
 
   ifstream f(find);
   assert(f.is_open());
@@ -3229,6 +3235,7 @@ void SyntheticClient::import_find(const char *base, const char *find, bool data)
     f >> mtime;
     f.seekg(1, ios::cur);
     getline(f, filename);
+    UserPerm perms(uid, gid);
 
     // ignore "."
     if (filename == ".") continue;
@@ -3296,7 +3303,7 @@ void SyntheticClient::import_find(const char *base, const char *find, bool data)
       }
       f += filename;
       if (S_ISDIR(mode)) {
-	client->mkdir(f.c_str(), mode);
+	client->mkdir(f.c_str(), mode, perms);
       } else {
 	int fd = client->open(f.c_str(), O_WRONLY|O_CREAT, mode & 0777);
 	assert(fd > 0);	
@@ -3400,9 +3407,9 @@ int SyntheticClient::chunk_file(string &filename)
 
 
 
-void SyntheticClient::mksnap(const char *base, const char *name)
+void SyntheticClient::mksnap(const char *base, const char *name, const UserPerm& perms)
 {
-  client->mksnap(base, name);
+  client->mksnap(base, name, perms);
 }
 
 void SyntheticClient::rmsnap(const char *base, const char *name)
@@ -3412,7 +3419,8 @@ void SyntheticClient::rmsnap(const char *base, const char *name)
 
 void SyntheticClient::mksnapfile(const char *dir)
 {
-  client->mkdir(dir, 0755);
+  UserPerm perms = client->pick_my_perms();
+  client->mkdir(dir, 0755, perms);
 
   string f = dir;
   f += "/foo";
@@ -3425,7 +3433,7 @@ void SyntheticClient::mksnapfile(const char *dir)
   
   string s = dir;
   s += "/.snap/1";
-  client->mkdir(s.c_str(), 0755);
+  client->mkdir(s.c_str(), 0755, perms);
 
   fd = client->open(f.c_str(), O_WRONLY);
   client->write(fd, buf, 1048576*2, 1048576);
