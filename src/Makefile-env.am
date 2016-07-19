@@ -135,7 +135,9 @@ AM_CXXFLAGS = \
 	$(AM_COMMON_CFLAGS) \
 	-ftemplate-depth-1024 \
 	-Wnon-virtual-dtor \
-	-Wno-invalid-offsetof 
+	-Wno-invalid-offsetof \
+	-I$(top_srcdir)/src/googletest/googlemock/include \
+	-I$(top_srcdir)/src/dmclock/support/src
 if LINUX
 AM_CXXFLAGS += $(HARDENING_CFLAGS) 
 endif

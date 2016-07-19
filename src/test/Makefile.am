@@ -127,12 +127,15 @@ EXTRA_DIST += \
 # target to build but not run the unit tests
 unittests:: $(check_PROGRAMS)
 
+GTEST_CXXFLAGS = \
+	-I$(top_srcdir)/src/googletest/googlemock/include \
+	-I$(top_builddir)/src/googletest/googletest/include
+DMC_SUPPORT_CXXFLAGS = \
+	-I$(top_srcdir)/src/dmclock/support
 UNITTEST_CXXFLAGS = \
 	$(AM_CXXFLAGS) \
-	-I$(top_srcdir)/src/googletest/googlemock/include \
-	-I$(top_builddir)/src/googletest/googlemock/include \
-	-I$(top_srcdir)/src/googletest/googletest/include \
-	-I$(top_builddir)/src/googletest/googletest/include
+	$(GTEST_CXXFLAGS) \
+	$(DMC_SUPPORT_CXXFLAGS)
 UNITTEST_LDADD = \
 	$(top_builddir)/src/googletest/googlemock/lib/libgmock_main.la \
 	$(top_builddir)/src/googletest/googlemock/lib/libgmock.la \
