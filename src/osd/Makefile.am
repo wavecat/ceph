@@ -24,7 +24,9 @@ libosd_a_SOURCES = \
 	osd/OpRequest.cc \
 	osd/SnapMapper.cc \
 	osd/ScrubStore.cc \
-	osd/mClockOpClassAdapter.cc \
+	osd/PGQueueable.cc \
+	osd/mClockOpClassQueue.cc \
+	osd/mClockClientQueue.cc \
         dmclock/src/dmclock_util.cc \
         dmclock/support/src/run_every.cc \
 	objclass/class_api.cc
@@ -32,8 +34,10 @@ libosd_a_SOURCES = \
 libosd_a_CXXFLAGS = ${AM_CXXFLAGS} -Idmclock/src -Idmclock/support/src -Igoogletest/googletest/include/gtest
 libosd_a_LIBADD =
 noinst_LIBRARIES += libosd.a
+
 noinst_HEADERS += \
-	osd/mClockOpClassAdapter.h \
+	osd/mClockOpClassQueue.h \
+	osd/mClockClientQueue.h \
 	osd/PGQueueable.h \
 	common/mClockPriorityQueue.h \
 	dmclock/src/dmclock_server.h \
