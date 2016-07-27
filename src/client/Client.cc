@@ -8679,16 +8679,14 @@ int Client::_flush(Fh *f)
   return err;
 }
 
-int Client::truncate(const char *relpath, loff_t length) 
+int Client::truncate(const char *relpath, loff_t length, const UserPerm& perms) 
 {
   struct stat attr;
   attr.st_size = length;
-  // FIXME
-  UserPerm perms(get_uid(), get_gid());
   return setattr(relpath, &attr, CEPH_SETATTR_SIZE, perms);
 }
 
-int Client::ftruncate(int fd, loff_t length) 
+int Client::ftruncate(int fd, loff_t length, const UserPerm& perms) 
 {
   Mutex::Locker lock(client_lock);
   tout(cct) << "ftruncate" << std::endl;
@@ -8704,7 +8702,7 @@ int Client::ftruncate(int fd, loff_t length)
 #endif
   struct stat attr;
   attr.st_size = length;
-  return _setattr(f->inode, &attr, CEPH_SETATTR_SIZE);
+  return _setattr(f->inode, &attr, CEPH_SETATTR_SIZE, perms);
 }
 
 int Client::fsync(int fd, bool syncdataonly) 
