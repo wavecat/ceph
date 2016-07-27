@@ -6685,7 +6685,7 @@ void Client::touch_dn(Dentry *dn)
   lru.lru_touch(dn);
 }
 
-int Client::chmod(const char *relpath, mode_t mode)
+int Client::chmod(const char *relpath, mode_t mode, const UserPerm& perms)
 {
   Mutex::Locker lock(client_lock);
   tout(cct) << "chmod" << std::endl;
@@ -6693,15 +6693,15 @@ int Client::chmod(const char *relpath, mode_t mode)
   tout(cct) << mode << std::endl;
   filepath path(relpath);
   InodeRef in;
-  int r = path_walk(path, &in);
+  int r = path_walk(path, &in, perms);
   if (r < 0)
     return r;
   struct stat attr;
   attr.st_mode = mode;
-  return _setattr(in, &attr, CEPH_SETATTR_MODE);
+  return _setattr(in, &attr, CEPH_SETATTR_MODE, perms);
 }
 
-int Client::fchmod(int fd, mode_t mode)
+int Client::fchmod(int fd, mode_t mode, const UserPerm& perms)
 {
   Mutex::Locker lock(client_lock);
   tout(cct) << "fchmod" << std::endl;
@@ -6716,10 +6716,10 @@ int Client::fchmod(int fd, mode_t mode)
 #endif
   struct stat attr;
   attr.st_mode = mode;
-  return _setattr(f->inode, &attr, CEPH_SETATTR_MODE);
+  return _setattr(f->inode, &attr, CEPH_SETATTR_MODE, perms);
 }
 
-int Client::lchmod(const char *relpath, mode_t mode)
+int Client::lchmod(const char *relpath, mode_t mode, const UserPerm& perms)
 {
   Mutex::Locker lock(client_lock);
   tout(cct) << "lchmod" << std::endl;
@@ -6728,12 +6728,12 @@ int Client::lchmod(const char *relpath, mode_t mode)
   filepath path(relpath);
   InodeRef in;
   // don't follow symlinks
-  int r = path_walk(path, &in, false);
+  int r = path_walk(path, &in, perms, false);
   if (r < 0)
     return r;
   struct stat attr;
   attr.st_mode = mode;
-  return _setattr(in, &attr, CEPH_SETATTR_MODE);
+  return _setattr(in, &attr, CEPH_SETATTR_MODE, perms);
 }
 
 int Client::chown(const char *relpath, int uid, int gid)
