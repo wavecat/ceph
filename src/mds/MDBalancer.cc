@@ -340,6 +340,7 @@ void MDBalancer::queue_split(CDir *dir)
 
 void MDBalancer::queue_merge(CDir *dir)
 {
+  assert(mds->mdsmap->allows_dirfrags());
   merge_queue.insert(dir->dirfrag());
 }
 
