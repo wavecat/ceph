@@ -304,7 +304,8 @@ string SyntheticClient::get_sarg(int seq)
 }
 
 int SyntheticClient::run()
-{ 
+{
+  UserPerm perms = client->pick_my_perms();
   dout(15) << "initing" << dendl;
   int err = client->init();
   if (err < 0) {
@@ -313,7 +314,7 @@ int SyntheticClient::run()
   }
 
   dout(15) << "mounting" << dendl;
-  err = client->mount("");
+  err = client->mount("", perms);
   if (err < 0) {
     dout(0) << "failed to mount: " << cpp_strerror(err) << dendl;
     client->shutdown();
@@ -325,8 +326,6 @@ int SyntheticClient::run()
   dout(5) << "run" << dendl;
 
   int seq = 0;
-
-  UserPerm perms = client->pick_my_perms();
 
   for (list<int>::iterator it = modes.begin();
        it != modes.end();
