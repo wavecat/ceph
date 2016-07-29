@@ -1516,6 +1516,7 @@ int Client::verify_reply_trace(int r,
   inodeno_t created_ino;
   bool got_created_ino = false;
   ceph::unordered_map<vinodeno_t, Inode*>::iterator p;
+  UserPerm perms(uid, gid);
 
   extra_bl.claim(reply->get_extra_bl());
   if (extra_bl.length() >= 8) {
@@ -1550,7 +1551,7 @@ int Client::verify_reply_trace(int r,
 			 << " got_ino " << got_created_ino
 			 << " ino " << created_ino
 			 << dendl;
-	  r = _do_lookup(d->dir->parent_inode, d->name, &target, uid, gid);
+	  r = _do_lookup(d->dir->parent_inode, d->name, &target, perms);
 	} else {
 	  // if the dentry is not linked, just do our best. see #5021.
 	  assert(0 == "how did this happen?  i want logs!");
@@ -1559,7 +1560,7 @@ int Client::verify_reply_trace(int r,
 	Inode *in = request->inode();
 	ldout(cct, 10) << "make_request got traceless reply, forcing getattr on #"
 		       << in->ino << dendl;
-	r = _getattr(in, request->regetattr_mask, uid, gid, true);
+	r = _getattr(in, request->regetattr_mask, perms, true);
 	target = in;
       }
       if (r >= 0) {
@@ -5849,7 +5850,7 @@ void Client::renew_caps(MetaSession *session)
 // high level (POSIXy) interface
 
 int Client::_do_lookup(Inode *dir, const string& name, InodeRef *target,
-		       int uid, int gid)
+		       const UserPerm& perms)
 {
   int op = dir->snapid == CEPH_SNAPDIR ? CEPH_MDS_OP_LOOKUPSNAP : CEPH_MDS_OP_LOOKUP;
   MetaRequest *req = new MetaRequest(op);
@@ -5865,7 +5866,7 @@ int Client::_do_lookup(Inode *dir, const string& name, InodeRef *target,
 
   ldout(cct, 10) << "_do_lookup on " << path << dendl;
 
-  int r = make_request(req, uid, gid, target);
+  int r = make_request(req, perms, target);
   ldout(cct, 10) << "_do_lookup res is " << r << dendl;
   return r;
 }
@@ -5875,6 +5876,7 @@ int Client::_lookup(Inode *dir, const string& dname, InodeRef *target,
 {
   int r = 0;
   Dentry *dn = NULL;
+  UserPerm perms(uid, gid);
 
   if (!dir->is_dir()) {
     r = -ENOTDIR;
@@ -5952,7 +5954,7 @@ int Client::_lookup(Inode *dir, const string& dname, InodeRef *target,
     }
   }
 
-  r = _do_lookup(dir, dname, target, uid, gid);
+  r = _do_lookup(dir, dname, target, perms);
   goto done;
 
  hit_dn:
