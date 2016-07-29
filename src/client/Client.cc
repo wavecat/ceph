@@ -5832,11 +5832,10 @@ int Client::_do_lookup(Inode *dir, const string& name, InodeRef *target,
 }
 
 int Client::_lookup(Inode *dir, const string& dname, InodeRef *target,
-		    int uid, int gid)
+		    const UserPerm& perms)
 {
   int r = 0;
   Dentry *dn = NULL;
-  UserPerm perms(uid, gid);
 
   if (!dir->is_dir()) {
     r = -ENOTDIR;
