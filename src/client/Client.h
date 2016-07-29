@@ -540,11 +540,14 @@ protected:
 
   // path traversal for high-level interface
   InodeRef cwd;
-  int path_walk(const filepath& fp, InodeRef *end, bool followsym=true,
-		int uid=-1, int gid=-1);
   int path_walk(const filepath& fp, InodeRef *end, const UserPerm& perms,
-		bool followsym=true) {
-    return path_walk(fp, end, followsym, perms.uid(), perms.gid());
+		bool followsym=true);
+  int path_walk(const filepath& fp, InodeRef *end, bool followsym=true,
+		int uid=-1, int gid=-1) {
+    if (uid < 0) uid = get_uid();
+    if (gid < 0) gid = get_gid();
+    UserPerm perms(uid, gid);
+    return path_walk(fp, end, perms, followsym);
   }
 
   int fill_stat(Inode *in, struct stat *st, frag_info_t *dirstat=0, nest_info_t *rstat=0);
@@ -781,11 +784,6 @@ private:
 		 const UserPerm& perms);
   int _lookup(Inode *dir, const string& dname, InodeRef *target,
 	      const UserPerm& perm);
-  int _lookup(Inode *dir, const string& dname, InodeRef *target,
-	      int uid, int gid) {
-    UserPerm perms(uid, gid);
-    return _lookup(dir, dname, target, perms);
-  }
 
   int _link(Inode *in, Inode *dir, const char *name, const UserPerm& perm,
 	    InodeRef *inp = 0);

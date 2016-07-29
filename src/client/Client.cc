@@ -5964,8 +5964,8 @@ int Client::get_or_create(Inode *dir, const char* name,
   return 0;
 }
 
-int Client::path_walk(const filepath& origpath, InodeRef *end, bool followsym,
-		      int uid, int gid)
+int Client::path_walk(const filepath& origpath, InodeRef *end,
+		      const UserPerm& perms, bool followsym)
 {
   filepath path = origpath;
   InodeRef cur;
@@ -5974,11 +5974,6 @@ int Client::path_walk(const filepath& origpath, InodeRef *end, bool followsym,
   else
     cur = cwd;
   assert(cur);
-
-  if (uid < 0)
-    uid = get_uid();
-  if (gid < 0)
-    gid = get_gid();
 
   ldout(cct, 10) << "path_walk " << path << dendl;
 
@@ -5991,11 +5986,11 @@ int Client::path_walk(const filepath& origpath, InodeRef *end, bool followsym,
     ldout(cct, 20) << "  (path is " << path << ")" << dendl;
     InodeRef next;
     if (cct->_conf->client_permissions) {
-      int r = may_lookup(cur.get(), uid, gid);
+      int r = may_lookup(cur.get(), perms);
       if (r < 0)
 	return r;
     }
-    int r = _lookup(cur.get(), dname, &next, uid, gid);
+    int r = _lookup(cur.get(), dname, &next, perms);
     if (r < 0)
       return r;
     // only follow trailing symlink if followsym.  always follow
