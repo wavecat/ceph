@@ -2393,6 +2393,7 @@ void MDSRank::create_logger()
 
   mdlog->create_logger();
   server->create_logger();
+  sessionmap.register_perfcounters();
   mdcache->register_perfcounters();
 }
 
