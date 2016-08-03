@@ -6170,15 +6170,13 @@ int Client::mkdir(const char *relpath, mode_t mode, const UserPerm& perm)
   return _mkdir(dir.get(), name.c_str(), mode, perm);
 }
 
-int Client::mkdirs(const char *relpath, mode_t mode)
+int Client::mkdirs(const char *relpath, mode_t mode, const UserPerm& perms)
 {
   Mutex::Locker lock(client_lock);
   ldout(cct, 10) << "Client::mkdirs " << relpath << dendl;
   tout(cct) << "mkdirs" << std::endl;
   tout(cct) << relpath << std::endl;
   tout(cct) << mode << std::endl;
-
-  UserPerm perms(get_uid(), get_gid());
 
   //get through existing parts of path
   filepath path(relpath);
@@ -6220,7 +6218,7 @@ int Client::mkdirs(const char *relpath, mode_t mode)
   return 0;
 }
 
-int Client::rmdir(const char *relpath)
+int Client::rmdir(const char *relpath, const UserPerm& perms)
 {
   Mutex::Locker lock(client_lock);
   tout(cct) << "rmdir" << std::endl;
@@ -6229,7 +6227,6 @@ int Client::rmdir(const char *relpath)
   string name = path.last_dentry();
   path.pop_dentry();
   InodeRef dir;
-  UserPerm perms(get_uid(), get_gid());
   int r = path_walk(path, &dir, perms);
   if (r < 0)
     return r;
@@ -6241,7 +6238,7 @@ int Client::rmdir(const char *relpath)
   return _rmdir(dir.get(), name.c_str(), perms);
 }
 
-int Client::mknod(const char *relpath, mode_t mode, dev_t rdev) 
+int Client::mknod(const char *relpath, mode_t mode, const UserPerm& perms, dev_t rdev) 
 { 
   Mutex::Locker lock(client_lock);
   tout(cct) << "mknod" << std::endl;
@@ -6252,7 +6249,6 @@ int Client::mknod(const char *relpath, mode_t mode, dev_t rdev)
   string name = path.last_dentry();
   path.pop_dentry();
   InodeRef dir;
-  UserPerm perms(get_uid(), get_gid());
   int r = path_walk(path, &dir, perms);
   if (r < 0)
     return r;
@@ -6266,7 +6262,7 @@ int Client::mknod(const char *relpath, mode_t mode, dev_t rdev)
 
 // symlinks
   
-int Client::symlink(const char *target, const char *relpath)
+int Client::symlink(const char *target, const char *relpath, const UserPerm& perms)
 {
   Mutex::Locker lock(client_lock);
   tout(cct) << "symlink" << std::endl;
@@ -6277,7 +6273,6 @@ int Client::symlink(const char *target, const char *relpath)
   string name = path.last_dentry();
   path.pop_dentry();
   InodeRef dir;
-  UserPerm perms(get_uid(), get_gid());
   int r = path_walk(path, &dir, perms);
   if (r < 0)
     return r;
