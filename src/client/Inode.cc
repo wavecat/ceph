@@ -7,7 +7,6 @@
 #include "Dir.h"
 #include "MetaSession.h"
 #include "ClientSnapRealm.h"
-#include "UserGroups.h"
 
 ostream& operator<<(ostream &out, const Inode &in)
 {
