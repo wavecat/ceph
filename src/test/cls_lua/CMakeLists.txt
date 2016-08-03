@@ -13,3 +13,6 @@ target_link_libraries(ceph_test_cls_lua
   ${EXTRALIBS}
   radostest
 )
+install(TARGETS
+  ceph_test_cls_lua
+  DESTINATION ${CMAKE_INSTALL_BINDIR})
