@@ -790,7 +790,7 @@ struct C_InvalidateCache : public Context {
 
   void ImageCtx::register_watch(Context *on_finish) {
     assert(image_watcher == NULL);
-    image_watcher = new ImageWatcher(*this);
+    image_watcher = new ImageWatcher<>(*this);
     image_watcher->register_watch(on_finish);
   }
 

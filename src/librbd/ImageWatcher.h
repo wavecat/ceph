@@ -25,9 +25,10 @@ namespace librbd {
 class ImageCtx;
 template <typename T> class TaskFinisher;
 
+template <typename ImageCtxT = ImageCtx>
 class ImageWatcher {
 public:
-  ImageWatcher(ImageCtx& image_ctx);
+  ImageWatcher(ImageCtxT& image_ctx);
   ~ImageWatcher();
 
   void register_watch(Context *on_finish);
@@ -220,7 +221,7 @@ private:
     }
   };
 
-  ImageCtx &m_image_ctx;
+  ImageCtxT &m_image_ctx;
 
   mutable RWLock m_watch_lock;
   WatchCtx m_watch_ctx;
@@ -314,5 +315,7 @@ private:
 };
 
 } // namespace librbd
+
+extern template class librbd::ImageWatcher<librbd::ImageCtx>;
 
 #endif // CEPH_LIBRBD_IMAGE_WATCHER_H
