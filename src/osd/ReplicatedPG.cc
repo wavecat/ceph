@@ -10487,9 +10487,11 @@ void ReplicatedPG::hit_set_trim(RepGather *repop, unsigned max)
 
     assert(!is_degraded_or_backfilling_object(oid));
 
-    dout(20) << __func__ << " removing " << oid << dendl;
-    ++repop->ctx->at_version.version;
-    repop->ctx->log.push_back(
+    ObjectContextRef obc = get_object_context(oid, false);
+    if (obc) {
+      dout(20) << __func__ << " removing " << oid << dendl;
+      ++repop->ctx->at_version.version;
+      repop->ctx->log.push_back(
         pg_log_entry_t(pg_log_entry_t::DELETE,
 		       oid,
 		       repop->ctx->at_version,
@@ -10497,21 +10499,22 @@ void ReplicatedPG::hit_set_trim(RepGather *repop, unsigned max)
 		       0,
 		       osd_reqid_t(),
 		       repop->ctx->mtime));
-    if (pool.info.require_rollback()) {
-      if (repop->ctx->log.back().mod_desc.rmobject(
-	  repop->ctx->at_version.version)) {
-	repop->ctx->op_t->stash(oid, repop->ctx->at_version.version);
+      if (pool.info.require_rollback()) {
+	if (repop->ctx->log.back().mod_desc.rmobject(
+	      repop->ctx->at_version.version)) {
+	  repop->ctx->op_t->stash(oid, repop->ctx->at_version.version);
+	} else {
+	  repop->ctx->op_t->remove(oid);
+	}
       } else {
 	repop->ctx->op_t->remove(oid);
+	repop->ctx->log.back().mod_desc.mark_unrollbackable();
       }
     } else {
-      repop->ctx->op_t->remove(oid);
-      repop->ctx->log.back().mod_desc.mark_unrollbackable();
+      derr << __func__ << " weird, missing " << oid << dendl;
     }
     updated_hit_set_hist.history.pop_front();
 
-    ObjectContextRef obc = get_object_context(oid, false);
-    assert(obc);
     --repop->ctx->delta_stats.num_objects;
     --repop->ctx->delta_stats.num_objects_hit_set_archive;
     repop->ctx->delta_stats.num_bytes -= obc->obs.oi.size;
